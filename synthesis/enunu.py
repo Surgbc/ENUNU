@@ -318,6 +318,15 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
             path_spectrogram,
             path_aperiodicity
         )
+    elif calculator == "built-in-vocoder":
+        print(
+            f"{datetime.now()} : calculating acoustic with built-in-vocoder function")
+        # timing.full から acoustic.csv を作る。
+        enulib.acoustic.timing2acoustic(
+            config,
+            path_full_timing,
+            path_acoustic
+        )
     else:
         print(
             f'{datetime.now()} : calculating acoustic with {calculator}')
@@ -370,6 +379,17 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
             path_f0,
             path_spectrogram,
             path_aperiodicity,
+            path_wav
+        )
+
+    # 組み込まれたVocoderで合成する場合
+    elif synthesizer == "vocoder":
+        print(f"{datetime.now()} : synthesizing WAV with vocoder model")
+        # timing.full から acoustic.csv を作る。
+        enulib.world.acoustic2vocoder_wav(
+            config,
+            path_full_timing,
+            path_acoustic,
             path_wav
         )
 
@@ -431,7 +451,7 @@ def main(path_plugin: str, path_wav_out: Union[str, None]):
 
 
 if __name__ == '__main__':
-    print('_____ξ ・ヮ・)ξ < ENUNU v0.4.0 ________')
+    print('_____ξ ・ヮ・)ξ < ENUNU v0.6.0 ________')
     print(f'argv: {argv}')
     if len(argv) == 3:
         main(argv[1], argv[2])

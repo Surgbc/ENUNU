@@ -120,8 +120,42 @@
 - enuconfig.yaml の任意項目から以下の項目を削除しました。
   - extensions
     - `timelag_calculator`
-    - `timelag_calculator`
+    - `timelag_editor`
     - `duration_calculator`
     - `duration_editor`
 - 急激なf0変化を滑らかにする拡張機能を追加しました。
   - enuconofig.yaml の `extentions` のうち `acoustic_editor` に `"%e/extensions/f0_smoother.py"` を指定することで利用できます。
+
+## v0.4.1 (2022-07-10)
+
+- 合成後に無音が含まれる場合に、WAV全体がノイズのように出力される不具合を修正
+  - 32bit float の形式で出力するときに16bitの値のまま出力する場合があったため、音量が大きすぎてノイズに聞こえる。
+
+## v0.5.0 (2022-08-09)
+
+- Vibratoモデルに対応
+- GAN-based mgc postfilter に対応
+
+## v0.5.1 (2022-08-11)
+
+- mgc_postfilter まわりの不具合を修正
+
+## v0.5.2 (2022-09-19)
+
+- 同梱のライブラリをバージョンアップ
+  - joblib==1.2.0
+  - numpy==1.22.4
+  - pyyaml==6.0
+  - ほか動作に影響なさそうなライブラリ
+- scikit-learn はバージョンアップで不具合が出るので据え置き
+
+# v0.6.0 (2022-09-25)
+
+- USTのフラグ欄に `+` または `-` が含まれるときに合成失敗することへの対策機能を追加
+- f0_feedbacker と f0_smoother の標準出力を削減
+- スタイルシフト用の拡張機能 (style_shifter.py) を追加
+  - enuconfig の `ust_editor` と `acoustic_editor` 欄に `%e/extensions/style_shifter` と記載することで使えるようになります。
+  - USTの各ノートのフラグ欄に `S5` や `S-4` のように記述すると歌い方が変わります。
+    - たとえば `S5` とすると半音5つ分だけ高いときの歌い方で歌い、`S-4` とすると半音4つ分だけ低いときの歌い方で歌います。
+  - 動作仕様
+    - フラグに基づいてUST内の各ノートの音程を上下させる → 各種パラメーターをENUNU用モデルで計算する → 最初に下げた分だけ f0 の高さを戻す → WAVを生成する
