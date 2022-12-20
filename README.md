@@ -21,7 +21,7 @@ For the windows version you can check [Enunu for Windows](https://github.com/sta
 ```
 
 ### Uninstalling
-```
+```bash
 sudo apt remove enunu
 ```
 
