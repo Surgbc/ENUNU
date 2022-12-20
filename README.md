@@ -18,7 +18,7 @@ For the windows version you can check [Enunu for Windows](https://github.com/sta
 
 Manually download from [releases](https://github.com/adventHymnals/ENUNU/releases) or run:
 ```bash
-curl --silent "https://api.github.com/repos//adventHymnals/ENUNU/releases/latest"|   grep "browser_download_url.*amd64.deb" | head -n 1 | cut -d : -f 2,3 | tr -d \"  | xargs wget -O tmp.deb && sudo dpkg -i tmp.deb
+curl --silent "https://api.github.com/repos/adventHymnals/ENUNU/releases/latest"|   grep "browser_download_url.*amd64.deb" | head -n 1 | cut -d : -f 2,3 | tr -d \"  | xargs wget -O tmp.deb && sudo dpkg -i tmp.deb
 ```
 
 ### Uninstalling
