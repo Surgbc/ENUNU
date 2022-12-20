@@ -1,0 +1,5 @@
+#!/bin/bash
+
+systemctl stop enunu
+systemctl disable enunu
+rm /lib/systemd/system/enunu.service

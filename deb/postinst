@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Copyright (c) Advent Hymnals. All rights reserved.
+# Licensed under the MIT License.
+
+# Symlink bin command to /usr/local/bin
+rm -f /usr/local/bin/enunu
+ln -s /opt/enunu/enunu_server.sh /usr/local/bin/enunu
+
+# Enable the Service
+systemctl enable enunu
+systemctl start enunu
