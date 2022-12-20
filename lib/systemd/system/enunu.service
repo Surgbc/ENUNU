@@ -1,0 +1,14 @@
+[Unit]
+Description=Enunu Server
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/enunu
+ExecStart=/opt/enunu/enunu_server.sh
+SyslogIdentifier=Enunu_server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

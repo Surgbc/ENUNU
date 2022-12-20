@@ -1,80 +1,104 @@
-# ENUNU
+# ENUNU for Linux
 
-NNSVS用歌声モデルをUTAU音源みたいに使えるようにするUTAUプラグイン
+This software allows you to use [NNSVS-singing-models](https://github.com/nnsvs/nnsvs) like [UTAU-VBs](https://github.com/adventHymnals/openUtau). It runs as a service. Install once and forget about it, unless you need to mess around with it abit.
 
-## インストールと使い方の記事
+For the windows version you can check [Enunu for Windows](https://github.com/stakira/ENUNU/releases)
 
-[UTAUでNNSVSモデルを使おう！（ENUNU）](https://note.com/crazy_utau/n/n45db22b33d2c)
+## Requirements
+- python 3.8
+- [OpenUtau for Linux]((https://github.com/adventHymnals/openUtau).)
 
-## 使い方
+## Notes
 
-1. USTを開き、ENUNU用モデルを含むUTAU音源を原音ファイルセットに設定する。
-   例）「おふとんP (ENUNU)」・・・ENUNU向けのNNSVS用おふとんP歌声モデル
-2. USTの歌詞をひらがな単独音にする。
-3. 再生したい部分を選択し、プラグインとしてENUNUを起動する。
-4. ～ 数秒か数分待つ ～
-5. 選択部分のWAVファイルがUSTファイルと同一フォルダに生成される。
+1. This version is a standalone python application. It does not run as a plugin. No need to put it in the Plugins folder.
+2. I couldn't get pysinsy to build in my system, so I built it in colab and included it as a dependency with this repo. You may need to rebuild it for your system. 
+3. Since the files written by enunu server running as a service are owned by `root:root`, the work-around has been adopted of changing their ownership to `nobody:nogroup`
 
-## 使い方ヒント
+## Installing
 
-- 2021年以前に配布された日本語モデルでは、促音(っ)は、直前のノートに含めることをお勧めします。
-  - さっぽろ → \[さっ]\[ぽ]\[ろ]
-- 2022年以降に配布された日本語モデルでは、促音(っ)は、独立したノートとすることをお勧めします。
-  - さっぽろ → \[さ]\[っ]\[ぽ]\[ろ]
+```bash
 
-- 促音以外の複数文字の平仮名歌詞には対応していません。
-- 音素を空白区切りで直接入力できます。平仮名と併用できますが、1ノート内に混在させることはできません。
+```
+
+### Uninstalling
+```
+sudo apt remove enunu
+```
+
+## Usage
+### In dev mode
+
+```bash
+## just in case 
+sudo apt install python3-pip
+sudo apt install python3.8-venv
+
+python -m venv venv
+source venv/bin/activate
+python -m pip install -r requirements.txt --no-cache-dir
+```
+
+Or just run
+```bash
+./enunu_server.sh
+```
+
+## Tips
+
+- It is recommended to include the consonant in the previous note.
+  - \[さ]\[っ]\[ぽ]\[ろ] → \[さっ]\[ぽ]\[ろ]
+- It does not support multi-syllable-hiragana-lyric in one note, except for "っ".
+ Lets you enter phonemes directly, separated by spaces. Can be used with hiragana, but cannot be mixed in one note.
   - \[い]\[ら]\[ん]\[か]\[ら]\[ぷ]\[て] → \[i]\[r a]\[N]\[k a]\[ら]\[p]\[て]
-- 音素の直接入力により、1ノート内に2音節以上を含めることができます。
+- You can have more than one syllable in a note by entering phonemes directly.
   - \[さっ]\[ぽ]\[ろ] → \[さっ]\[p o r o]
 
-## 利用規約
+## Terms of Use
 
-利用時は各キャラクターの規約に従ってください。また、本ソフトウェアの規約は LICENSE ファイルとして別途同梱しています。
+Please follow the rules of each VB or singing-model when using. The terms of this software are provided separately as LICENSE files.
 
 
 
----
-
-ここからは開発者向けです
 
 ---
 
+Following contents are for developers.
+
+---
 
 
-## 開発環境
 
-- Windows 10
-- Python 3.8（3.9はPytorchが未対応）
-  - utaupy 1.18.0
-  - numpy 1.21.2（1.19.4 はWindowsのバグで動かない）
-  - torch 1.8.0+cu113
-  - nnsvs 開発バージョン
-  - nnmnkwii
-- CUDA 11.3
+## Development Environment
 
-## ENUNU向けUTAU音源フォルダの作り方
+- Ubuntu 22.04
+- Python 3.8
+  - utaupy 1.14.1
+  - numpy 1.21.2（do not use 1.19.4）
+  - torch 1.7.0+cu101
+  - nnsvs (develepment version)
+  - nnmnkwii (develepment version)
+- CUDA 11.0
 
-通常のNNSVS用歌声モデルも使えますが、[enunu training kit](https://github.com/oatsu-gh/enunu_training_kit)を使ったほうがすこし安定すると思います。採譜時の音程チェック用に、再配布可のUTAU単独音音源の同梱をお勧めします。
 
-### 通常のモデルを使う場合
+## Notes about LAB file format
 
-モデルのルートディレクトリに enuconfig.yaml を追加し、ENUNU用おふとんP歌声モデルなどを参考にして書き換えてください。`question_path` は学習に使ったものを指定し、同梱してください。
+The full context label specification is different from Sinsy's. Important differences include:.
 
-### ENUNU用のモデルを使う場合
+- Does not handle information about phrases (e18 - e25, g, h, i, j3)
+- Do not use musical symbols such as note strength (e 26 - e 56)
+- does not deal with information about measures (e10 - e17, j2, j3)
+- Does not handle beat information (c4, d4, e4)
+- Relative note pitch (d2, e2, f2) specifications are different
+  Since the key of the note cannot be obtained, the octave information is ignored and the relative pitch is assumed to be C = 0.
+- Lock note key (d3, e3, f3) to 120
+  - 120 if not manually specified
+  Any value that is a multiple of -12 and does not appear on the Sinsy label can be substituted. (24, etc.)
+- **Note and syllable information (a, c, d, f) are different with rest in between**
+  - According to the Sinsy specification, the "Next Note" information in the note immediately before the rest points to the note after the rest, but this tool is designed to point to the rest.
+  - Notes immediately following a rest are similarly designed to point to the rest itself, not to the start of the rest.
+  - Same with syllables.
 
-モデルのルートディレクトリに enuconfig.yaml を追加し、[波音リツ ENUNU Ver.2](http://www.canon-voice.com/enunu.html) 同梱のファイルを参考にして書き換えてください。`question_path` は学習に使ったものを指定し、同梱してください。
-
-## ラベルファイルに関する備考
-
-フルコンテキストラベルの仕様が Sinsy のものと異なります。重要な相違点は以下です。
-
-- フレーズに関する情報を扱わない（e18-e25,  g,  h,  i,  j3）
-- ノートの強弱などの音楽記号を扱わない（e26-e56）
-- 小節に関する情報を扱わない（e10-e17,  j2,  j3）
-- 拍に関する情報を扱わない（c4,  d4,  e4）
-- **休符を挟んだ場合のノートおよび音節の前後情報（a, c, d, f）が異なる**
-  - Sinsyの仕様では、休符の直前のノートが持つ「次のノート」の情報は休符終了後のノートを指しますが、本ツールでは休符を指す設計としています。
-  - 休符の直後のノートも同様に、休符開始前ではなく休符そのものを指す設計としています。
-  - 音節も同様です。
-
+## Todo
+See [issues]()
+- [ ] Making this work in a remote server
+- [ ] Building a web frontend for this to replace OpenUtau.

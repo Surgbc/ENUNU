@@ -1,7 +1,8 @@
-hydra-core<1.1
+../pysinsy/pysinsy-0.0.5-cp38-cp38-linux_x86_64.whl
+hydra-core<1.2
 joblib>=1.2.0
 nnmnkwii>=0.0.23
-nnsvs
+nnsvs== 0.0.3
 numpy>=1.20
 omegaconf
 scipy
@@ -10,3 +11,4 @@ tqdm
 utaupy>=1.18.0
 pyyaml
 scikit-learn<0.24.0
+colored_traceback

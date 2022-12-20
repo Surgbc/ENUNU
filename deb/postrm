@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm /usr/local/bin/enunu
+
+systemctl daemon-reload
+rm -rf /opt/enunu ||:

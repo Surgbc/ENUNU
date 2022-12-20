@@ -9,6 +9,7 @@
   - キャッシュフォルダでいいと思う。
 3. LABファイル→WAVファイル
 """
+# fmt: off
 import sys
 import warnings
 from datetime import datetime
@@ -36,11 +37,12 @@ except ModuleNotFoundError:
     print('インストール完了までしばらくお待ちください。')
     print('----------------------------------------------------------')
     from install_torch import pip_install_torch
-    pip_install_torch(join('python'))
+    pip_install_torch("python")
     print('----------------------------------------------------------')
     print('インストール成功しました。歌声合成を始めます。')
     print('----------------------------------------------------------\n')
     import enulib
+# fmt: on
 
 
 def get_standard_function_config(config, key) -> Union[None, str]:
@@ -88,10 +90,40 @@ def get_project_path(path_utauplugin):
     return path_ust, voice_dir, cache_dir
 
 
-def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
+def main_as_plugin(path_plugin: str) -> str:
     """
     UtauPluginオブジェクトから音声ファイルを作る
     """
+    config, temp_dir = setup(path_plugin)
+    run_timing(config, temp_dir)
+    run_acoustic(config, temp_dir)
+    path_wav = run_synthesizer(config, temp_dir)
+
+    # 音声を再生する。
+    if exists(path_wav):
+        os.startfile(path_wav)
+
+def get_paths(temp_dir: str):
+    # 各種出力ファイルのパスを設定
+    path_temp_ust = abspath(join(temp_dir, 'temp.ust'))
+    path_temp_table = abspath(join(temp_dir, 'temp.table'))
+    path_full_score = abspath(join(temp_dir, 'score.full'))
+    path_mono_score = abspath(join(temp_dir, 'score.lab'))
+    path_full_timing = abspath(join(temp_dir, 'timing.full'))
+    path_mono_timing = abspath(join(temp_dir, 'timing.lab'))
+    path_acoustic = abspath(join(temp_dir, 'acoustic.csv'))
+    path_f0 = abspath(join(temp_dir, 'f0.csv'))
+    path_spectrogram = abspath(join(temp_dir, 'spectrogram.csv'))
+    path_aperiodicity = abspath(join(temp_dir, 'aperiodicity.csv'))
+
+    return path_temp_ust, path_temp_table, \
+        path_full_score, path_mono_score, \
+        path_full_timing, path_mono_timing, \
+        path_acoustic, path_f0, path_spectrogram, \
+        path_aperiodicity
+
+
+def setup(path_plugin: str):
     # UTAUの一時ファイルに書いてある設定を読み取る
     print(f'{datetime.now()} : reading settings in TMP')
     path_ust, voice_dir, _ = get_project_path(path_plugin)
@@ -113,51 +145,45 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
     # 日付時刻を取得
     str_now = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-    # wav出力パスが指定されていない(プラグインとして実行している)場合
-    if path_wav is None:
-        # 入出力パスを設定する
-        if path_ust is not None:
-            songname = splitext(basename(path_ust))[0]
-            out_dir = dirname(path_ust)
-            temp_dir = join(out_dir, f'{songname}_enutemp')
-            path_wav = abspath(join(out_dir, f'{songname}__{str_now}.wav'))
-        # WAV出力パス指定なしかつUST未保存の場合
-        else:
-            print('USTが保存されていないので一時フォルダにWAV出力します。')
-            songname = f'temp__{str_now}'
-            out_dir = mkdtemp(prefix='enunu-')
-            temp_dir = join(out_dir, f'{songname}_enutemp')
-            path_wav = abspath(join(out_dir, f'{songname}__{str_now}.wav'))
-        play_after_synth = True
-    # WAV出力パスが指定されている場合
-    else:
-        songname = splitext(basename(path_wav))[0]
-        out_dir = dirname(path_wav)
+    # 入出力パスを設定する
+    if path_ust is not None:
+        songname = splitext(basename(path_ust))[0]
+        out_dir = dirname(path_ust)
         temp_dir = join(out_dir, f'{songname}_enutemp')
-        path_wav = abspath(path_wav)
-        play_after_synth = False
+        path_wav = abspath(join(out_dir, f'{songname}__{str_now}.wav'))
+    # WAV出力パス指定なしかつUST未保存の場合
+    else:
+        print('USTが保存されていないので一時フォルダにWAV出力します。')
+        songname = f'temp__{str_now}'
+        out_dir = mkdtemp(prefix='enunu-')
+        temp_dir = join(out_dir, f'{songname}_enutemp')
+        path_wav = abspath(join(out_dir, f'{songname}__{str_now}.wav'))
 
     # 一時出力フォルダがなければつくる
     os.makedirs(temp_dir, exist_ok=True)
     # 各種出力ファイルのパスを設定
     # path_plugin = path_plugin
-    path_temp_ust = abspath(join(temp_dir, 'temp.ust'))
-    path_temp_table = abspath(join(temp_dir, 'temp.table'))
-    path_full_score = abspath(join(temp_dir, 'score.full'))
-    path_mono_score = abspath(join(temp_dir, 'score.lab'))
-    path_full_timing = abspath(join(temp_dir, 'timing.full'))
-    path_mono_timing = abspath(join(temp_dir, 'timing.lab'))
-    path_acoustic = abspath(join(temp_dir, 'acoustic.csv'))
-    path_f0 = abspath(join(temp_dir, 'f0.csv'))
-    path_spectrogram = abspath(join(temp_dir, 'spectrogram.csv'))
-    path_aperiodicity = abspath(join(temp_dir, 'aperiodicity.csv'))
+    path_temp_ust, path_temp_table, \
+        path_full_score, path_mono_score, \
+        path_full_timing, path_mono_timing, \
+        path_acoustic, path_f0, path_spectrogram, \
+        path_aperiodicity = get_paths(temp_dir)
 
     # USTを一時フォルダに複製
     print(f'{datetime.now()} : copying UST')
     copy(path_plugin, path_temp_ust)
     print(f'{datetime.now()} : copying Table')
     copy(config.table_path, path_temp_table)
-    
+
+    return config, temp_dir
+
+
+def run_timing(config: DictConfig, temp_dir: str):
+    path_temp_ust, path_temp_table, \
+        path_full_score, path_mono_score, \
+        path_full_timing, path_mono_timing, \
+        path_acoustic, path_f0, path_spectrogram, \
+        path_aperiodicity = get_paths(temp_dir)
 
     # USTを事前加工------------------------------------------------------------------
     extension_list = get_extension_path_list(config, 'ust_editor')
@@ -300,6 +326,16 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
                 enulib.extensions.merge_full_time_change_to_mono(
                     path_full_timing, path_mono_timing)
 
+    return path_full_timing, path_mono_timing
+
+
+def run_acoustic(config: DictConfig, temp_dir: str):
+    path_temp_ust, path_temp_table, \
+        path_full_score, path_mono_score, \
+        path_full_timing, path_mono_timing, \
+        path_acoustic, path_f0, path_spectrogram, \
+        path_aperiodicity = get_paths(temp_dir)
+
     # 音響パラメータを推定 timing.full -> acoustic---------------------------
     calculator = get_standard_function_config(config, 'acoustic_calculator')
     # 計算をしない場合
@@ -319,15 +355,6 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
             path_f0,
             path_spectrogram,
             path_aperiodicity
-        )
-    elif calculator == "built-in-vocoder":
-        print(
-            f"{datetime.now()} : calculating acoustic with built-in-vocoder function")
-        # timing.full から acoustic.csv を作る。
-        enulib.acoustic.timing2acoustic(
-            config,
-            path_full_timing,
-            path_acoustic
         )
     else:
         print(
@@ -365,6 +392,16 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
                 aperiodicity=path_aperiodicity
             )
 
+    return path_acoustic, path_f0, path_spectrogram, path_aperiodicity
+
+
+def run_synthesizer(config: DictConfig, temp_dir: str):
+    path_temp_ust, path_temp_table, \
+        path_full_score, path_mono_score, \
+        path_full_timing, path_mono_timing, \
+        path_acoustic, path_f0, path_spectrogram, \
+        path_aperiodicity = get_paths(temp_dir)
+
     # WORLDを使って音声ファイルを生成: acoustic.csv -> <songname>.wav--------------
     synthesizer = get_standard_function_config(config, 'wav_synthesizer')
 
@@ -381,17 +418,6 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
             path_f0,
             path_spectrogram,
             path_aperiodicity,
-            path_wav
-        )
-
-    # 組み込まれたVocoderで合成する場合
-    elif synthesizer == "vocoder":
-        print(f"{datetime.now()} : synthesizing WAV with vocoder model")
-        # timing.full から acoustic.csv を作る。
-        enulib.world.acoustic2vocoder_wav(
-            config,
-            path_full_timing,
-            path_acoustic,
             path_wav
         )
 
@@ -434,31 +460,25 @@ def main_as_plugin(path_plugin: str, path_wav: Union[str, None]) -> str:
     # print(f'{datetime.now()} : converting LAB to JSON')
     # hts2json(path_full_score, path_json)
 
-    # 音声を再生する。
-    if play_after_synth and exists(path_wav):
-        os.startfile(path_wav)
-
     return path_wav
 
 
-def main(path_plugin: str, path_wav_out: Union[str, None]):
+def main(path_plugin: str):
     """
     入力ファイルによって処理を分岐する。
     """
     # logging.basicConfig(level=logging.INFO)
     if path_plugin.endswith('.tmp'):
-        main_as_plugin(path_plugin, path_wav_out)
+        main_as_plugin(path_plugin)
     else:
         raise ValueError('Input file must be TMP(plugin).')
 
 
 if __name__ == '__main__':
-    print('_____ξ ・ヮ・)ξ < ENUNU v0.6.0 ________')
+    print('_____ξ ・ヮ・)ξ < ENUNU v0.4.0 ________')
     print(f'argv: {argv}')
-    if len(argv) == 3:
-        main(argv[1], argv[2])
-    elif len(argv) == 2:
-        main(argv[1], None)
+    if len(argv) == 2:
+        main(argv[1])
     elif len(argv) == 1:
         main(input('Input file path of TMP(plugin)\n>>> ').strip('"'), None)
     else:

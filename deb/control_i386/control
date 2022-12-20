@@ -1,0 +1,7 @@
+Package: Enunu
+Version: 1.0
+Architecture: i386
+Maintainer: Brian Onang'o <surgbc@gmail.com>
+Description: A standalone enunu server.
+ This software allows you to use NNSVS-singing-models like UTAU-VBs.
+ 
